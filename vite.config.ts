@@ -15,4 +15,5 @@ export default defineConfig({
 		VitePluginRestart(vitePluginRestartOptions),
 		viteStaticCopy(viteStaticCopyOptions)
 	],
+	publicDir: './static'
 });
