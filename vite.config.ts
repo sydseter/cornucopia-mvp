@@ -14,6 +14,5 @@ export default defineConfig({
 		sveltekit(),
 		VitePluginRestart(vitePluginRestartOptions),
 		viteStaticCopy(viteStaticCopyOptions)
-	],
-	publicDir: '.vercel/output/static'
+	]
 });
