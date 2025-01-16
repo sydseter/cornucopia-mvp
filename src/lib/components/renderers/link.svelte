@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { base } from "$app/paths";
   interface Props {
     href?: string;
     title?: string;
@@ -19,6 +20,7 @@
     let style : string = $state("");
 
     if(href.startsWith('/'))
+      href = base + href;
       target = '_self';
 
     if (raw.includes('[internal]')) {
@@ -34,11 +36,11 @@
     }
 
     if (raw.includes('[white]')) {
-      style = 'color:white;';
+      style = ' white';
     }
   </script>
   
-  <a {rel} {target} {href} {title} class="{clazz} link-with-external-indicator" {style}>{@render children?.()}</a>
+  <a {rel} {target} {href} {title} class="{clazz} link-with-external-indicator{style}">{@render children?.()}</a>
 
   <style>
     a
@@ -54,5 +56,9 @@
     {
         opacity: 50%;
         text-decoration: none;
-    }    
+    }
+    
+    .white {
+      color:white;
+    }
   </style>

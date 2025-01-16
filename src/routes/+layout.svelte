@@ -1,5 +1,7 @@
 <script lang="ts">
+    import { base } from '$app/paths';
     import 'normalize.css';
+    import { browser } from "$app/environment";
     import { page } from "$app/stores";
     import Breadcrumbs from "$lib/components/breadcrumbs.svelte";
     import Footer from "$lib/components/footer.svelte";
@@ -20,10 +22,56 @@
     function getFullWidthPages(path : string)
     {
         // Add exceptions for page that need to be shown full page width
-        if(path == '/')
+        if(path ==  base + '/')
             return true;
         return false;
     }
+
+    // intercept innerHTML invocation and remove style before div is added to dom
+    $effect(() => {
+    if (browser) {
+        const originalInnerHTML = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML');
+        
+        Object.defineProperty(Element.prototype, 'innerHTML', {
+        set(value: string) {
+            if (value.includes('id="svelte-announcer"')) {
+            const safeValue = value.replace(/style=".*?"/i, '');
+            originalInnerHTML?.set?.call(this, safeValue);
+            } else {
+            originalInnerHTML?.set?.call(this, value);
+            }
+        }
+        });
+    }
+    });
+
+    // add styles back in non-CSP violating way
+    $effect(() => {
+    if (document) {
+        const observer = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+            for (const node of mutation.addedNodes) {
+            if (node instanceof HTMLDivElement && node.id === 'svelte-announcer') {
+                node.style.position = 'absolute';
+                node.style.left = '0';
+                node.style.top = '0';
+                node.style.clip = 'rect(0 0 0 0)';
+                node.style.clipPath = 'inset(50%)';
+                node.style.overflow = 'hidden';
+                node.style.whiteSpace = 'nowrap';
+                node.style.width = '1px';
+                node.style.height = '1px';
+            }
+            }
+        }
+        });
+
+        observer.observe(document, {
+        childList: true,
+        subtree: true
+        });
+    }
+    });
 </script>
 
 <Metadata></Metadata>
@@ -54,6 +102,25 @@
         min-height: 100vh;
         margin : auto;
         padding-bottom: 1rem;
+    }
+
+    :global {
+        /* Add a 'external link' svg to all links that are external */
+        .link-with-external-indicator[href^="http"]:not([href*="cornucopia-mvp.vercel.app"]):not([href*="localhost"]):not([href^="/"]):after {
+            content: '';
+            display: inline-block;
+            margin-left: 0.2rem;
+            width: 1rem;
+            height: 1rem;
+            -webkit-mask: url('/icons/external-link.svg') no-repeat 50% 50%;
+            mask: url('/icons/external-link.svg') no-repeat 50% 50%;
+            -webkit-mask-size: cover;
+            mask-size: cover;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            background-color: currentColor; 
+        }
     }
 
     @media (max-aspect-ratio: 1/1)

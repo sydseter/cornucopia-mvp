@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { base } from '$app/paths';
     import SvelteMarkdown from 'svelte-markdown';
     import renderers from '$lib/components/renderers/renderers';
     import type { PageData } from "./$types";
@@ -32,18 +33,19 @@
     let mobileappSuits = $state(suits?.get(`${VERSION_MOBILEAPP}-${$lang}`));
     let webappSuits = $state(suits?.get(`${VERSION_WEBAPP}-${$lang}`));
 
-    if (!mobileappSuits) {
+    if (!(() => mobileappSuits)()) {
         mobileappSuits = suits?.get(`${VERSION_MOBILEAPP}-en`) as Suit[];
     }
 
-    if (!webappSuits) {
+    if (!(() => webappSuits)()) {
         webappSuits = suits?.get(`${VERSION_WEBAPP}-en`) as Suit[];
     }
 
     let version : string = $state(VERSION_WEBAPP);
     let suit : string;
     let card : Card = $state(cards?.get('VE2') as Card);
-    let mapping = $state((new MappingController(mappingData?.get(version))).getCardMappings(card.id));
+    
+    let mapping = $state((new MappingController(mappingData?.get((() => version)()))).getCardMappings((() => card)().id));
 
     let map : Map<string,boolean> = $state(new SvelteMap());
     setTree(false);
@@ -51,14 +53,14 @@
     function setTree(expand : boolean)
     {
         // Collapse or expand the entire tree of suits
-        for(let i = 0 ; i < webappSuits.length ; i++)
+        for(let i = 0 ; i < (webappSuits?.length as number) ; i++)
         {
-            map.set(webappSuits[i].name,expand);
+            if (webappSuits !== undefined && typeof webappSuits[i] !== 'undefined') map.set(webappSuits[i]?.name,expand);
         }
 
         for(let i = 0 ; i < mobileappSuits.length ; i++)
         {
-            map.set(mobileappSuits[i].name,expand);
+            if (mobileappSuits !== undefined && typeof mobileappSuits[i] !== 'undefined') map.set(mobileappSuits[i]?.name,expand);
         }
     }
 
@@ -104,7 +106,7 @@
 <div class="script">
     {#each webappSuits as suit}
         {#each suit.cards as card}
-            <p><a style="display:none;" href="{cards?.get(card)?.url}">{suit.name} {card}</a></p>
+            <p><a class="card hide" href="{base}{cards?.get(card)?.url}">{suit.name} {card}</a></p>
         {/each}
     {/each}
 
@@ -131,7 +133,7 @@
                     {#if map?.get(suit.name)}
                         {#each suit.cards as card}
                             <p onmouseenter={()=>{enter(suit.name, cards?.get(card)?.id)}}>
-                                <a href="{cards?.get(card)?.url}">├── {cards?.get(card)?.id}</a>
+                                <a href="{base}{cards?.get(card)?.url}">├── {cards?.get(card)?.id}</a>
                             </p>
                         {/each}
                     {/if}
@@ -145,7 +147,7 @@
                     {#if map?.get(suit.name)}
                         {#each suit.cards as card}
                             <p onmouseenter={()=>{enter(suit.name,cards?.get(card)?.id)}}>
-                                <a href="{cards?.get(card)?.url}">├── {cards?.get(card)?.id}</a>
+                                <a href="{base}{cards?.get(card)?.url}">├── {cards?.get(card)?.id}</a>
                             </p>
                         {/each}
                     {/if}
@@ -172,7 +174,7 @@
                 <div class="card-buttons">
                 {#each suit.cards as card}
                     <p>
-                        <a href="cards/{cards?.get(card)?.id}">├── {cards?.get(card)?.id}</a>
+                        <a href="{base}/cards/{cards?.get(card)?.id}">├── {cards?.get(card)?.id}</a>
                     </p>
                 {/each}
                 </div>
@@ -193,7 +195,7 @@
                 <div class="card-buttons">
                 {#each suit.cards as card}
                     <p>
-                        <a href="cards/{cards?.get(card)?.id}">├── {cards?.get(card)?.id}</a>
+                        <a href="{base}/cards/{cards?.get(card)?.id}">├── {cards?.get(card)?.id}</a>
                     </p>
                 {/each}
                 </div>
@@ -203,6 +205,11 @@
 </noscript>
 </div>
 <style>
+
+    .card.hide
+    {
+        display: none;
+    }
     .card-buttons {
         display: none;
     }
@@ -284,12 +291,6 @@
         font-weight: normal;
     }
 
-    h1
-    {
-        font-size: 2rem;
-        font-weight: 400;
-    }
-
     h2,h3
     {
         margin:0;
@@ -358,11 +359,3 @@
         }
     }
 </style>
-<noscript>
-    <style>
-        .script
-        {
-            display: none;
-        }
-    </style>
-</noscript>
